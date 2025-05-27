@@ -1,0 +1,3 @@
+# SOTA: Never copy secrets or local env files to production images
+.env
+.env.* 

@@ -1,0 +1,53 @@
+# Production deployment for German Clustering SaaS
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: german-clustering-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: german-clustering
+  template:
+    metadata:
+      labels:
+        app: german-clustering
+    spec:
+      containers:
+      - name: german-clustering-app
+        image: your-registry/german-clustering-service:v0.1.0
+        imagePullPolicy: IfNotPresent  # Always for CI/CD, IfNotPresent for dev
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MODEL_PATH
+          value: "/app/models/german_customer_suggestions_top2vec.model"
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false  # Set true if no writes needed
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 65
+          periodSeconds: 10
+# Notes:
+# - Set imagePullPolicy to Always for production CI/CD
+# - Adjust resource requests/limits for your workload
+# - Use readOnlyRootFilesystem: true if your app does not write to disk
+# - Add nodeSelector/tolerations/affinity as needed for your cluster 
